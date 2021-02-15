@@ -7,20 +7,21 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <typeinfo>
 using namespace std;
 
-bool lesserThanArray(vector<int> vecA, vector<int> vecB){
+int lesserThanArray(vector<int> vecA, vector<int> vecB){
     for(int i = 0; i < vecA.size(); i++)
     {
         if(vecA[i] > vecB[i])
         {
-            return false;
+            return -1;
         }
     }
-    return true;
+    return 1;
 }
 
-void safetyAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vector<int>> Allocation){
+void safetyAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vector<int>> Allocation, bool maxIsNeed = false){
     int n = Max.size();
     int m = Available.size();
     
@@ -28,14 +29,21 @@ void safetyAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vect
 
     // Inicializando a matriz Need
     vector<vector<int>> Need;
-    for(int i = 0; i < Max.size(); i ++)
-    {
-        Need.push_back({});
-        for(int j = 0; j < Max[i].size(); j ++)
+
+    if(maxIsNeed){
+        Need = Max;
+    }
+    else{
+        for(int i = 0; i < Max.size(); i ++)
         {
-            Need[i].push_back(Max[i][j] - Allocation[i][j]);
+            Need.push_back({});
+            for(int j = 0; j < Max[i].size(); j ++)
+            {
+                Need[i].push_back(Max[i][j] - Allocation[i][j]);
+            }
         }
     }
+    
     vector<int> Work = Available;
     vector<bool> Finish;
     for(int i = 0; i < n; i++)
@@ -48,7 +56,7 @@ void safetyAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vect
         bool reset = false;
         for(int i = 0; i < Finish.size(); i++)
         {
-            if(!Finish[i] && lesserThanArray(Need[i], Work))
+            if(!Finish[i] && lesserThanArray(Need[i], Work) == 1)
             {
                 for(int k = 0; k < Work.size(); k++)
                 {
@@ -87,6 +95,85 @@ void safetyAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vect
 
 }
 
+
+void requestAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vector<int>> Allocation, vector<vector<int>> Request)
+{
+    // Inicializando a matriz Need
+    vector<vector<int>> Need;
+    for(int i = 0; i < Max.size(); i ++)
+    {
+        Need.push_back({});
+        for(int j = 0; j < Max[i].size(); j ++)
+        {
+            Need[i].push_back(Max[i][j] - Allocation[i][j]);
+        }
+    }
+
+    for(int i = 0; i < Request.size();  i++)
+    {
+        bool willSkip = false;
+        int returnValueNeed = lesserThanArray(Request[i], Need[i]);
+        if(returnValueNeed == -1)
+        {
+            std::cout << "ERRO! Processo P"<<i<<" excedeu limite máximo de requisições!" << std::endl; 
+            willSkip = true;
+        }
+
+        if(!willSkip)
+        {
+            int returnValueAvailable = lesserThanArray(Request[i], Need[i]);
+            if(returnValueAvailable == 1)
+            {
+                for(int j = 0; j < Available.size(); j++){
+                    Available[j] = Available[j] - Request[i][j];
+                }
+                for(int j = 0; j < Allocation[i].size(); j++){
+                    Allocation[i][j] = Allocation[i][j] + Request[i][j];
+                }
+                for(int j = 0; j < Need[i].size(); j++){
+                    Need[i][j] = Need[i][j] - Request[i][j];
+                }
+            }
+            else{
+                std::cout << "O processo P"<<i<<" vai ter que esperar por recursos!";
+            }
+        }
+    }
+
+    for(int i = 0; i < Allocation.size();  i++)
+    {
+        string toBePrinted = "";
+        for(int j = 0; j < Allocation[i].size(); j++)
+        {
+            toBePrinted += to_string(Allocation[i][j]) + " ";
+        } 
+        std::cout << toBePrinted << std::endl;
+    }
+    std::cout << std::endl;
+
+    for(int i = 0; i < Need.size();  i++)
+    {
+        string toBePrinted = "";
+        for(int j = 0; j < Need[i].size(); j++)
+        {
+            toBePrinted += to_string(Need[i][j]) + " ";
+        } 
+        std::cout << toBePrinted << std::endl;
+    }
+    std::cout << std::endl;
+
+    string toBePrinted = "";
+    for(int i = 0; i < Available.size();  i++)
+    {
+        toBePrinted += to_string(Available[i]) + " ";
+    }
+    std::cout << toBePrinted << std::endl << std::endl;
+    
+    safetyAlgorithm(Available, Need, Allocation, true);
+    
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -104,8 +191,16 @@ int main(int argc, char *argv[])
 
     vector<int> avaiable = {3,3,2};
 
-    safetyAlgorithm(avaiable, max, alloc);
-    
+    vector<vector<int>> request = {
+                            {0,0,0},
+                            {1,0,2},
+                            {0,0,0},
+                            {0,0,0},
+                            {0,0,0}
+                            };
+
+    //safetyAlgorithm(avaiable, max, alloc);
+    requestAlgorithm(avaiable,max,alloc, request);
 
 
     return 0;
