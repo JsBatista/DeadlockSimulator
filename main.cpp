@@ -173,10 +173,72 @@ void requestAlgorithm(vector<int> Available, vector<vector<int>> Max, vector<vec
     
 }
 
+void detectionAlgorithm(vector<int> Available, vector<vector<int>> Allocation, vector<vector<int>> Request)
+{
+    vector<int> Work = Available;
+    vector<bool> Finish = {};
+
+    for(int i = 0; i < Request.size(); i ++)
+    {
+        bool isZero = true;
+        for(int j = 0; j < Request[i].size(); j++){
+            if(Request[i][j] != 0)
+            {
+                isZero = false;
+                break;
+            }
+        }
+        
+        Finish.push_back(isZero);
+    }
+    int numberOfDeadlocks = 0;
+    bool foundI;
+
+    while(true){
+        foundI = false;
+        for(int i = 0; i < Finish.size(); i++)
+        {
+            int returnValue = lesserThanArray(Request[i], Work);
+            if(Finish[i] == false && returnValue == 1){
+                for(int j = 0; j < Work.size(); j++)
+                {
+                    Work[j] = Work[j] + Allocation[i][j];
+                }
+                Finish[i] = true;
+                foundI = true;
+            }
+        }
+
+        if(!foundI)
+        {
+            break;
+        }
+    }
+
+    string processosEmDeadlock = "";
+
+    for(int i = 0; i < Finish.size(); i++)
+    {
+        if(Finish[i] == false)
+        {
+            processosEmDeadlock += "P" + to_string(i) + " ";
+            numberOfDeadlocks += 1;
+        }
+    }
+
+    if(numberOfDeadlocks == 0)
+    {
+        std::cout << "O sistema não está em estado de deadlock!" << std::endl; 
+    }
+    else
+    {   
+        std::cout << "O sistema está em estado de deadlock com " << numberOfDeadlocks << " processos em deadlock!" << std::endl << "Esses processos são: " << processosEmDeadlock << "." << std::endl;
+    }
+};
 
 int main(int argc, char *argv[])
 {
-
+    /* Exemplo que da certo nos 2 primeiros algoritmos
     vector<vector<int>> alloc = {{0,1,0},
                                  {2,0,0},
                                  {3,0,2},
@@ -198,10 +260,30 @@ int main(int argc, char *argv[])
                             {0,0,0},
                             {0,0,0}
                             };
+    */
+
+    vector<vector<int>> alloc = {{0,1,0},
+                                 {2,0,0},
+                                 {3,0,3},
+                                 {2,1,1},
+                                 {0,0,2}};
+
+
+    vector<int> avaiable = {0,0,0};
+
+    vector<vector<int>> request = {
+                            {0,0,0},
+                            {2,0,2},
+                            {0,0,1},
+                            {1,0,0},
+                            {0,0,2}
+                            };
+
+
 
     //safetyAlgorithm(avaiable, max, alloc);
-    requestAlgorithm(avaiable,max,alloc, request);
-
+    //requestAlgorithm(avaiable,max,alloc, request);
+    detectionAlgorithm(avaiable, alloc, request);
 
     return 0;
 }
